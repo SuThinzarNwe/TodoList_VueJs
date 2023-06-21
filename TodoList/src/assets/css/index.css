@@ -1,0 +1,14 @@
+/* ./src/index.css */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+[v-cloak] {
+  display: none;
+}
+
+*,
+*::after,
+*::before {
+  transition: all 0.25s ease-out;
+}
