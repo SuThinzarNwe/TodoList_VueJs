@@ -56,7 +56,7 @@
               {{ todo.task }}
             </span>
             <input v-else type="text" v-model="todo.task" :ref="'task'" @keyup.enter="doneEdit(todo)"
-              @blur="doneEdit(todo)" class="px-2 py-1" @keyup.esc="doneEdit(todo)" />
+              @blur="doneEdit(todo)" class="px-2 py-1" @keyup.esc="cancelEdit(todo)" />
           </label>
           <button v-if="!todo.editItem"
             class="flex items-center border-black border-solid border-1 px-2 py-1 ml-auto text-white"
@@ -73,11 +73,13 @@
       <span class="text-gray-500">{{ remaining }} {{ remaining > 1 ? "items" : "item" }} left.</span>
       <div class="flex justify-center mb-4 mt-5">
         <button class="border-gray-200 flex-1 border hover:bg-blue-50 p-2 shadow-sm mr-2"
-          :class="{ 'active': filterTodo === 'all' }" @click="toggleCheckAll">
+          :class="{ 'active': checkAllButtonText === 'Uncheck All' }" @click="toggleCheckAll" :disabled="!isAnyTodo"
+          :style="{ 'background-color': !isAnyTodo ? '#f0f0f0' : '', 'color': !isAnyTodo ? '#ccc' : '', 'cursor': !isAnyTodo ? 'not-allowed' : '' }">
           {{ checkAllButtonText }}
         </button>
         <button class="border-gray-200 flex-1 border hover:bg-blue-50 p-2 shadow-sm mr-2"
-          :class="{ 'active': filterTodo === 'completed' }" @click="clearCompleted">
+          :class="{ 'active': filterTodo === 'completed' }" @click="clearCompleted" :disabled="!isAnyTodoCompleted"
+          :style="{ 'background-color': !isAnyTodoCompleted ? '#f0f0f0' : '', 'color': !isAnyTodoCompleted ? '#ccc' : '', 'cursor': !isAnyTodoCompleted ? 'not-allowed' : '' }">
           Clear Completed
         </button>
       </div>
@@ -135,6 +137,11 @@ const deleteTodo = index => {
 };
 
 const toggleEdit = todo => {
+  if (todo.editItem) {
+    todo.task = todo.taskBeforeEdit; // Restore initial task value
+  } else {
+    todo.taskBeforeEdit = todo.task; // Store initial task value
+  }
   todo.editItem = !todo.editItem;
 };
 
@@ -143,9 +150,17 @@ const doneEdit = todo => {
     isError.value = true;
     return;
   }
+  if (todo.editItem) {
+    todo.task = todo.taskBeforeEdit; // Restore initial task value
+  }
   todo.editItem = false;
   isError.value = false;
   saveData();
+};
+
+const cancelEdit = todo => {
+  todo.task = todo.taskBeforeEdit; // Restore initial task value
+  todo.editItem = false; // Exit editing mode
 };
 
 const saveData = () => {
@@ -163,20 +178,37 @@ watch(todos, () => {
   saveData();
 }, { deep: true });
 
-const toggleCheckAll = () => {
-  if (checkAllButtonText.value === 'Check All') {
-    checkAllButtonText.value = 'Unchecked All';
-    todos.value.forEach(todo => {
-      todo.completed = true;
-    });
+const isAnyTodo = computed(() => {
+  return todos.value.length > 0;
+});
+
+const isAnyTodoCompleted = computed(() => {
+  return todos.value.some(todo => todo.completed);
+});
+
+watch(isAnyTodoCompleted, (newValue) => {
+  if (newValue && remaining.value === 0) {
+    checkAllButtonText.value = 'Uncheck All';
   } else {
     checkAllButtonText.value = 'Check All';
-    todos.value.forEach(todo => {
-      todo.completed = false;
-    });
   }
+});
+
+const toggleCheckAll = () => {
+  const allCompleted = todos.value.every(todo => todo.completed);
+  todos.value.forEach(todo => {
+    todo.completed = !allCompleted;
+  });
+
+  if (allCompleted) {
+    checkAllButtonText.value = 'Check All';
+  } else {
+    checkAllButtonText.value = 'Uncheck All';
+  }
+
   saveData();
 };
+
 
 const clearCompleted = () => {
   todos.value = todos.value.filter(todo => !todo.completed);
