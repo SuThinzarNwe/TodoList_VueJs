@@ -12,3 +12,9 @@
 *::before {
   transition: all 0.25s ease-out;
 }
+
+@layer components {
+  .active {
+    @apply bg-blue-50 border border-blue-500 !important;
+  }
+}

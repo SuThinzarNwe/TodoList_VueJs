@@ -11,7 +11,7 @@
                         class="flex-no-shrink p-2 border-2 rounded text-teal border-teal bg-blue-500 hover:text-white hover:bg-teal h-12"
                         @click="addItem">
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5"
-                            stroke="white" class="w-6 h-6">
+                            stroke="white" class="w-5 h-6">
                             <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                         </svg>
                     </button>
@@ -47,15 +47,15 @@
             <ul class="mb-4">
                 <li v-for="(todo, index) in todoFilter" :key="todo.id" class="flex items-center bg-gray-200 mb-5 p-2">
                     <!-- Add checkbox for completed task -->
-                    <input type="checkbox" :id="'checkbox-' + todo.id" v-model="todo.completed" class="mr-2 h-5 w-6"
-                        v-if="!todo.editItem" />
+                    <input type="checkbox" :id="'checkbox-' + todo.id" v-model="todo.completed"
+                        class="mr-2 h-5 w-6 cursor-pointer" v-if="!todo.editItem" />
                     <label :for="'checkbox-' + todo.id" class="px-2 py-1 w-48">
-                        <span v-if="!todo.editItem" @click="toggleEdit(todo)" class="cursor-pointer"
+                        <span v-if="!todo.editItem" @dblclick="toggleEdit(todo)" class="cursor-pointer"
                             :class="{ 'line-through': todo.completed }">
                             {{ todo.task }}
                         </span>
                         <input v-else type="text" v-model="todo.task" :ref="'task'" @keyup.enter="doneEdit(todo)"
-                            @blur="doneEdit(todo)" class="px-2 py-1" />
+                            @blur="doneEdit(todo)" class="px-2 py-1" @keyup.esc="doneEdit(todo)" />
                     </label>
                     <button v-if="!todo.editItem"
                         class="flex items-center border-black border-solid border-1 px-2 py-1 ml-auto text-white"
@@ -182,6 +182,12 @@ export default {
         saveData() {
             localStorage.setItem("todos", JSON.stringify(this.todos));
         },
+        saveOnEscape(todo) {
+            todo.editItem = false;
+            this.isError = false;
+            this.saveData();
+        },
+
         restoreData() {
             const storedTodos = localStorage.getItem("todos");
             if (storedTodos) {
